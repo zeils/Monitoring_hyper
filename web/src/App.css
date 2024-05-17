@@ -1,0 +1,38 @@
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  background-color: #4CAF50; /* Зеленый цвет */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.tabs button:hover {
+  background-color: #45a049; /* Темно-зеленый цвет при наведении */
+}
+
+/* Активная вкладка */
+.tabs button.active {
+  background-color: #007bff; /* Синий цвет */
+}
+
+/* Стили для списка уязвимостей */
+.vulnerabilities {
+  padding-left: 20px;
+}
+
+.vulnerabilities ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.vulnerabilities ul li {
+  margin-bottom: 10px;
+  font-size: 18px;
+}
