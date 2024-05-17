@@ -4,7 +4,7 @@
 }
 
 .tabs button {
-  background-color: #4CAF50; /* Зеленый цвет */
+  background-color: #4CAF50; 
   color: white;
   border: none;
   padding: 10px 20px;
@@ -14,15 +14,15 @@
 }
 
 .tabs button:hover {
-  background-color: #45a049; /* Темно-зеленый цвет при наведении */
+  background-color: #45a049; 
 }
 
-/* Активная вкладка */
+
 .tabs button.active {
-  background-color: #007bff; /* Синий цвет */
+  background-color: #007bff; 
 }
 
-/* Стили для списка уязвимостей */
+
 .vulnerabilities {
   padding-left: 20px;
 }

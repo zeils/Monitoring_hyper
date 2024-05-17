@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerabilities</title>
+    <style>
+
+        .tab-btn {
+            background-color: #4CAF50; 
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+
+        function switchTab(tabName) {
+            var i;
+            var tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].style.display = "none";
+            }
+            document.getElementById(tabName).style.display = "block";
+        }
+        
+
+        function openAdvisoriesPage() {
+            window.location.href = "advisories.html";
+        }
+    </script>
+</head>
+<body>
+
+    <button class="tab-btn" onclick="switchTab('vulnerabilities')">CVE Vulnerabilities</button>
+    <button class="tab-btn" onclick="openAdvisoriesPage()">VmWare Advisories</button>
+
+
+    <div id="vulnerabilities" class="tab">
+        <h1>Vulnerabilities</h1>
+        <ul>
+        {% for vulnerability in vulnerabilities|sort(attribute='cve.lastModified', reverse=true) %}
+            <li>
+                <strong>CVE ID:</strong> {{ vulnerability['cve']['id'] }}<br>
+                <strong>Published:</strong> {{ vulnerability['cve']['published'] }}<br>
+                <strong>Last Modified:</strong> {{ vulnerability['cve']['lastModified'] }}<br>
+                <strong>Description:</strong> {{ vulnerability['cve']['descriptions'][0]['value'] }}<br>
+                <strong>CVSS Base Score:</strong> {% if 'cvssMetricV2' in vulnerability['cve']['metrics'] %}{{ vulnerability['cve']['metrics']['cvssMetricV2'][0]['cvssData']['baseScore'] }}{% else %}N/A{% endif %}<br>
+                <strong>References:</strong><br>
+                <ul>
+                    {% for reference in vulnerability['cve']['references'] %}
+                        <li><a href="{{ reference['url'] }}">{{ reference['url'] }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            <br>
+        {% endfor %}
+        </ul>
+    </div>
+
+</body>
+</html>
