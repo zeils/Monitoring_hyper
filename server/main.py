@@ -8,18 +8,22 @@ import time
 import schedule
 import re
 from datetime import datetime, timezone, timedelta
-
+import json
 
 app = Flask(__name__)
 CORS(app)
-refresh_time = 1 #Обновление актуальных угроз раз в refresh_time минут
+
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+
+
 
 def download_cve_html():
-    url = 'https://nvd.nist.gov/vuln/search/results?results_type=overview&search_type=last3months&form_type=Basic&isCpeNameSearch=false&orderBy=publishDate&orderDir=desc'
     filename = 'cve.html'
-    
+    cve_url = config['cve_url']
     try:
-        response = requests.get(url)
+        response = requests.get(cve_url)
         
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
@@ -36,7 +40,7 @@ def download_cve_html():
         print(f"Произошла ошибка: {e}")
 
 def download_vmware_html():
-    url = 'https://www.vmware.com/security/advisories.xml'
+    vmware_url = config['vmware_url']
     filename = 'vmware.html'
     session = requests.Session()
     
@@ -53,7 +57,7 @@ def download_vmware_html():
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
         }
-        response = session.get(url, headers=headers)
+        response = session.get(vmware_url, headers=headers)
 
         if response.status_code == 200:
             with open(filename, 'w', encoding='utf-8') as file:
@@ -119,9 +123,31 @@ def check_and_append_log(filename, string):
         last_line = None
 
     if last_line != string:
+        #send_to_zabbix(string)
         with open(filename, 'a') as file:
             file.write(string + '\n')
 
+def send_to_zabbix(message):
+    import subprocess
+    
+    host = config['zabbix_host_server']
+    host_name = config['zabbix_host_service']
+    key = config['zabbix_key']
+    
+    # Команда для отправки данных в Zabbix
+    command = [
+        'zabbix_sender',
+        '-z', host,
+        '-s', host_name,
+        '-k', key,
+        '-o', message
+    ]
+    
+    # Выполнение команды
+    subprocess.run(command, check=True)
+
+
+refresh_time = config['refresh_time']
 schedule.every(refresh_time).minutes.do(download_cve_html)
 schedule.every(refresh_time).minutes.do(download_vmware_html)
 schedule.every(refresh_time).minutes.do(find_dates_in_vmware_html)

@@ -11,7 +11,7 @@ function CveList() {
 
   const fetchHtmlContent = async () => {
     try {
-      const response = await axios.get('http://localhost:9000/api/cve');
+      const response = await axios.get(process.env.REACT_APP_server_cve_endpoint);
       setHtmlContent(response.data);
     } catch (error) {
       console.error('Error fetching HTML content:', error);
