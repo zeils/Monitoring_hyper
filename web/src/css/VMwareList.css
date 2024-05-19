@@ -1,0 +1,59 @@
+.container {
+    width: 100%;
+    margin: 20px 0;
+    font-size: 1em;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    background-color: #ffffff;
+}
+
+/* Стиль для заголовков */
+h1, h5 {
+    background-color: #009879;
+    color: #ffffff;
+    padding: 10px;
+    text-align: left;
+    font-weight: bold;
+}
+
+/* Стиль для блоков с важной информацией */
+.sa-important {
+    background-color: #ffcc00;
+    color: #ffffff;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+/* Стиль для меток */
+.sa-row-group label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* Стиль для строк с чередующимся фоном */
+.sa-row-group:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+/* Стиль для строк при наведении */
+.sa-row-group:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+/* Стиль для ссылок */
+a {
+    color: #009879;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Обнуление полей */
+.no-padd {
+    padding: 0;
+}

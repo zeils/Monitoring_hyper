@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import VulnerabilitiesList from './VulnerabilitiesList';
-import VMwareList from './VMwareList';
+import CveList from './components/CveList';
+import VMwareList from './components/VMwareList';
+import './css/App.css'
 
 function App() {
   const [selectedOption, setSelectedOption] = useState('CVE');
@@ -14,9 +15,9 @@ function App() {
       <h1>Недавние уязвимости:</h1>
       <div className="buttons">
         <button onClick={() => handleOptionChange('CVE')}>CVE</button>
-        <button onClick={() => handleOptionChange('VmWare')}>VmWare</button>
+        <button onClick={() => handleOptionChange('VmWare')}>VMware</button>
       </div>
-      {selectedOption === 'CVE' ? <VulnerabilitiesList /> : <VMwareList />}
+      {selectedOption === 'CVE' ? <CveList /> : <VMwareList />}
     </div>
   );
 }

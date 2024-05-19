@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir flask flask-cors requests
+RUN pip install --no-cache-dir flask flask-cors requests bs4
 
 CMD ["python", "main.py"]
