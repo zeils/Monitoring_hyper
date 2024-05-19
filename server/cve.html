@@ -8,10 +8,48 @@
 </thead>
 <tbody>
 <tr data-testid="vuln-row-0">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-0" href="/vuln/detail/CVE-2024-5097">CVE-2024-5097</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-0" href="/vuln/detail/CVE-2024-35917">CVE-2024-35917</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-0">A vulnerability, which was classified as problematic, was found in SourceCodester Simple Inventory System 1.0. Affected is an unknown function of the file /tableedit.php#page=editprice. The manipulation of the argument itemnumber leads to cross-site request forgery. It is possible to launch the attack remotely. The exploit has been disclosed to the public and may be used. The identifier of this vulnerability is VDB-265080.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-0">May 18, 2024; 11:15:06 PM -0400</span>
+<p data-testid="vuln-summary-0">In the Linux kernel, the following vulnerability has been resolved:
+
+s390/bpf: Fix bpf_plt pointer arithmetic
+
+Kui-Feng Lee reported a crash on s390x triggered by the
+dummy_st_ops/dummy_init_ptr_arg test [1]:
+
+  [&lt;0000000000000002&gt;] 0x2
+  [&lt;00000000009d5cde&gt;] bpf_struct_ops_test_run+0x156/0x250
+  [&lt;000000000033145a&gt;] __sys_bpf+0xa1a/0xd00
+  [&lt;00000000003319dc&gt;] __s390x_sys_bpf+0x44/0x50
+  [&lt;0000000000c4382c&gt;] __do_syscall+0x244/0x300
+  [&lt;0000000000c59a40&gt;] system_call+0x70/0x98
+
+This is caused by GCC moving memcpy() after assignments in
+bpf_jit_plt(), resulting in NULL pointers being written instead of
+the return and the target addresses.
+
+Looking at the GCC internals, the reordering is allowed because the
+alias analysis thinks that the memcpy() destination and the assignments'
+left-hand-sides are based on different objects: new_plt and
+bpf_plt_ret/bpf_plt_target respectively, and therefore they cannot
+alias.
+
+This is in turn due to a violation of the C standard:
+
+  When two pointers are subtracted, both shall point to elements of the
+  same array object, or one past the last element of the array object
+  ...
+
+From the C's perspective, bpf_plt_ret and bpf_plt are distinct objects
+and cannot be subtracted. In the practical terms, doing so confuses the
+GCC's alias analysis.
+
+The code was written this way in order to let the C side know a few
+offsets defined in the assembly. While nice, this is by no means
+necessary. Fix the noncompliance by hardcoding these offsets.
+
+[1] https://lore.kernel.org/bpf/c9923c1d-971d-4022-8dc8-1364e929d34c@gmail.com/</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-0">May 19, 2024; 5:15:12 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -29,10 +67,20 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-1">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-1" href="/vuln/detail/CVE-2024-5096">CVE-2024-5096</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-1" href="/vuln/detail/CVE-2024-35916">CVE-2024-35916</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-1">A vulnerability classified as problematic was found in Hipcam Device up to 20240511. This vulnerability affects unknown code of the file /log/wifi.mac of the component MAC Address Handler. The manipulation leads to information disclosure. The attack can be initiated remotely. The exploit has been disclosed to the public and may be used. VDB-265078 is the identifier assigned to this vulnerability. NOTE: The vendor was contacted early about this disclosure but did not respond in any way.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-1">May 18, 2024; 10:15:49 PM -0400</span>
+<p data-testid="vuln-summary-1">In the Linux kernel, the following vulnerability has been resolved:
+
+dma-buf: Fix NULL pointer dereference in sanitycheck()
+
+If due to a memory allocation failure mock_chain() returns NULL, it is
+passed to dma_fence_enable_sw_signaling() resulting in NULL pointer
+dereference there.
+
+Call dma_fence_enable_sw_signaling() only if mock_chain() succeeds.
+
+Found by Linux Verification Center (linuxtesting.org) with SVACE.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-1">May 19, 2024; 5:15:12 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -50,10 +98,23 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-2">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-2" href="/vuln/detail/CVE-2024-5095">CVE-2024-5095</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-2" href="/vuln/detail/CVE-2024-35915">CVE-2024-35915</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-2">A vulnerability classified as problematic has been found in Victor Zsviot Camera 8.26.31. This affects an unknown part of the component MQTT Packet Handler. The manipulation leads to denial of service. It is possible to initiate the attack remotely. The exploit has been disclosed to the public and may be used. The identifier VDB-265077 was assigned to this vulnerability. NOTE: The vendor was contacted early about this disclosure but did not respond in any way.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-2">May 18, 2024; 10:15:48 PM -0400</span>
+<p data-testid="vuln-summary-2">In the Linux kernel, the following vulnerability has been resolved:
+
+nfc: nci: Fix uninit-value in nci_dev_up and nci_ntf_packet
+
+syzbot reported the following uninit-value access issue [1][2]:
+
+nci_rx_work() parses and processes received packet. When the payload
+length is zero, each message type handler reads uninitialized payload
+and KMSAN detects this issue. The receipt of a packet with a zero-size
+payload is considered unexpected, and therefore, such packets should be
+silently discarded.
+
+This patch resolved this issue by checking payload size before calling
+each message type handler codes.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-2">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -71,10 +132,17 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-3">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-3" href="/vuln/detail/CVE-2024-36050">CVE-2024-36050</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-3" href="/vuln/detail/CVE-2024-35914">CVE-2024-35914</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-3">Nix through 2.22.1 mishandles certain usage of hash caches, which makes it easier for attackers to replace current source code with attacker-controlled source code by luring a maintainer into accepting a malicious pull request.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-3">May 18, 2024; 6:15:07 PM -0400</span>
+<p data-testid="vuln-summary-3">In the Linux kernel, the following vulnerability has been resolved:
+
+nfsd: Fix error cleanup path in nfsd_rename()
+
+Commit a8b0026847b8 ("rename(): avoid a deadlock in the case of parents
+having no common ancestor") added an error bail out path. However this
+path does not drop the remount protection that has been acquired. Fix
+the cleanup path to properly drop the remount protection.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-3">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -92,10 +160,46 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-4">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-4" href="/vuln/detail/CVE-2024-28064">CVE-2024-28064</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-4" href="/vuln/detail/CVE-2024-35913">CVE-2024-35913</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-4">Kiteworks Totemomail 7.x and 8.x before 8.3.0 allows /responsiveUI/EnvelopeOpenServlet messageId directory traversal for unauthenticated file read and delete operations (with displayLoginChunkedImages) and write operations (with storeLoginChunkedImages).</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-4">May 18, 2024; 6:15:07 PM -0400</span>
+<p data-testid="vuln-summary-4">In the Linux kernel, the following vulnerability has been resolved:
+
+wifi: iwlwifi: mvm: pick the version of SESSION_PROTECTION_NOTIF
+
+When we want to know whether we should look for the mac_id or the
+link_id in struct iwl_mvm_session_prot_notif, we should look at the
+version of SESSION_PROTECTION_NOTIF.
+
+This causes WARNINGs:
+
+WARNING: CPU: 0 PID: 11403 at drivers/net/wireless/intel/iwlwifi/mvm/time-event.c:959 iwl_mvm_rx_session_protect_notif+0x333/0x340 [iwlmvm]
+RIP: 0010:iwl_mvm_rx_session_protect_notif+0x333/0x340 [iwlmvm]
+Code: 00 49 c7 84 24 48 07 00 00 00 00 00 00 41 c6 84 24 78 07 00 00 ff 4c 89 f7 e8 e9 71 54 d9 e9 7d fd ff ff 0f 0b e9 23 fe ff ff &lt;0f&gt; 0b e9 1c fe ff ff 66 0f 1f 44 00 00 90 90 90 90 90 90 90 90 90
+RSP: 0018:ffffb4bb00003d40 EFLAGS: 00010202
+RAX: 0000000000000000 RBX: ffff9ae63a361000 RCX: ffff9ae4a98b60d4
+RDX: ffff9ae4588499c0 RSI: 0000000000000305 RDI: ffff9ae4a98b6358
+RBP: ffffb4bb00003d68 R08: 0000000000000003 R09: 0000000000000010
+R10: ffffb4bb00003d00 R11: 000000000000000f R12: ffff9ae441399050
+R13: ffff9ae4761329e8 R14: 0000000000000001 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff9ae7af400000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000055fb75680018 CR3: 00000003dae32006 CR4: 0000000000f70ef0
+PKRU: 55555554
+Call Trace:
+ &lt;IRQ&gt;
+ ? show_regs+0x69/0x80
+ ? __warn+0x8d/0x150
+ ? iwl_mvm_rx_session_protect_notif+0x333/0x340 [iwlmvm]
+ ? report_bug+0x196/0x1c0
+ ? handle_bug+0x45/0x80
+ ? exc_invalid_op+0x1c/0xb0
+ ? asm_exc_invalid_op+0x1f/0x30
+ ? iwl_mvm_rx_session_protect_notif+0x333/0x340 [iwlmvm]
+ iwl_mvm_rx_common+0x115/0x340 [iwlmvm]
+ iwl_mvm_rx_mq+0xa6/0x100 [iwlmvm]
+ iwl_pcie_rx_handle+0x263/0xa10 [iwlwifi]
+ iwl_pcie_napi_poll_msix+0x32/0xd0 [iwlwifi]</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-4">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -113,10 +217,15 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-5">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-5" href="/vuln/detail/CVE-2024-28063">CVE-2024-28063</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-5" href="/vuln/detail/CVE-2024-35912">CVE-2024-35912</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-5">Kiteworks Totemomail through 7.0.0 allows /responsiveUI/EnvelopeOpenServlet envelopeRecipient reflected XSS.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-5">May 18, 2024; 6:15:07 PM -0400</span>
+<p data-testid="vuln-summary-5">In the Linux kernel, the following vulnerability has been resolved:
+
+wifi: iwlwifi: mvm: rfi: fix potential response leaks
+
+If the rx payload length check fails, or if kmemdup() fails,
+we still need to free the command response. Fix that.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-5">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -134,10 +243,79 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-6">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-6" href="/vuln/detail/CVE-2024-36048">CVE-2024-36048</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-6" href="/vuln/detail/CVE-2024-35911">CVE-2024-35911</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-6">QAbstractOAuth in Qt Network Authorization in Qt before 5.15.17, 6.x before 6.2.13, 6.3.x through 6.5.x before 6.5.6, and 6.6.x through 6.7.x before 6.7.1 uses only the time to seed the PRNG, which may result in guessable values.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-6">May 18, 2024; 5:15:47 PM -0400</span>
+<p data-testid="vuln-summary-6">In the Linux kernel, the following vulnerability has been resolved:
+
+ice: fix memory corruption bug with suspend and rebuild
+
+The ice driver would previously panic after suspend. This is caused
+from the driver *only* calling the ice_vsi_free_q_vectors() function by
+itself, when it is suspending. Since commit b3e7b3a6ee92 ("ice: prevent
+NULL pointer deref during reload") the driver has zeroed out
+num_q_vectors, and only restored it in ice_vsi_cfg_def().
+
+This further causes the ice_rebuild() function to allocate a zero length
+buffer, after which num_q_vectors is updated, and then the new value of
+num_q_vectors is used to index into the zero length buffer, which
+corrupts memory.
+
+The fix entails making sure all the code referencing num_q_vectors only
+does so after it has been reset via ice_vsi_cfg_def().
+
+I didn't perform a full bisect, but I was able to test against 6.1.77
+kernel and that ice driver works fine for suspend/resume with no panic,
+so sometime since then, this problem was introduced.
+
+Also clean up an un-needed init of a local variable in the function
+being modified.
+
+PANIC from 6.8.0-rc1:
+
+[1026674.915596] PM: suspend exit
+[1026675.664697] ice 0000:17:00.1: PTP reset successful
+[1026675.664707] ice 0000:17:00.1: 2755 msecs passed between update to cached PHC time
+[1026675.667660] ice 0000:b1:00.0: PTP reset successful
+[1026675.675944] ice 0000:b1:00.0: 2832 msecs passed between update to cached PHC time
+[1026677.137733] ixgbe 0000:31:00.0 ens787: NIC Link is Up 1 Gbps, Flow Control: None
+[1026677.190201] BUG: kernel NULL pointer dereference, address: 0000000000000010
+[1026677.192753] ice 0000:17:00.0: PTP reset successful
+[1026677.192764] ice 0000:17:00.0: 4548 msecs passed between update to cached PHC time
+[1026677.197928] #PF: supervisor read access in kernel mode
+[1026677.197933] #PF: error_code(0x0000) - not-present page
+[1026677.197937] PGD 1557a7067 P4D 0
+[1026677.212133] ice 0000:b1:00.1: PTP reset successful
+[1026677.212143] ice 0000:b1:00.1: 4344 msecs passed between update to cached PHC time
+[1026677.212575]
+[1026677.243142] Oops: 0000 [#1] PREEMPT SMP NOPTI
+[1026677.247918] CPU: 23 PID: 42790 Comm: kworker/23:0 Kdump: loaded Tainted: G        W          6.8.0-rc1+ #1
+[1026677.257989] Hardware name: Intel Corporation M50CYP2SBSTD/M50CYP2SBSTD, BIOS SE5C620.86B.01.01.0005.2202160810 02/16/2022
+[1026677.269367] Workqueue: ice ice_service_task [ice]
+[1026677.274592] RIP: 0010:ice_vsi_rebuild_set_coalesce+0x130/0x1e0 [ice]
+[1026677.281421] Code: 0f 84 3a ff ff ff 41 0f b7 74 ec 02 66 89 b0 22 02 00 00 81 e6 ff 1f 00 00 e8 ec fd ff ff e9 35 ff ff ff 48 8b 43 30 49 63 ed &lt;41&gt; 0f b7 34 24 41 83 c5 01 48 8b 3c e8 66 89 b7 aa 02 00 00 81 e6
+[1026677.300877] RSP: 0018:ff3be62a6399bcc0 EFLAGS: 00010202
+[1026677.306556] RAX: ff28691e28980828 RBX: ff28691e41099828 RCX: 0000000000188000
+[1026677.314148] RDX: 0000000000000000 RSI: 0000000000000010 RDI: ff28691e41099828
+[1026677.321730] RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000000
+[1026677.329311] R10: 0000000000000007 R11: ffffffffffffffc0 R12: 0000000000000010
+[1026677.336896] R13: 0000000000000000 R14: 0000000000000000 R15: ff28691e0eaa81a0
+[1026677.344472] FS:  0000000000000000(0000) GS:ff28693cbffc0000(0000) knlGS:0000000000000000
+[1026677.353000] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[1026677.359195] CR2: 0000000000000010 CR3: 0000000128df4001 CR4: 0000000000771ef0
+[1026677.366779] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[1026677.374369] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+[1026677.381952] PKRU: 55555554
+[1026677.385116] Call Trace:
+[1026677.388023]  &lt;TASK&gt;
+[1026677.390589]  ? __die+0x20/0x70
+[1026677.394105]  ? page_fault_oops+0x82/0x160
+[1026677.398576]  ? do_user_addr_fault+0x65/0x6a0
+[1026677.403307]  ? exc_page_fault+0x6a/0x150
+[1026677.407694]  ? asm_exc_page_fault+0x22/0x30
+[1026677.412349]  ? ice_vsi_rebuild_set_coalesce+0x130/0x1e0 [ice]
+[1026677.4186
+---truncated---</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-6">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -155,10 +333,52 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-7">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-7" href="/vuln/detail/CVE-2024-5094">CVE-2024-5094</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-7" href="/vuln/detail/CVE-2024-35910">CVE-2024-35910</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-7">A vulnerability was found in SourceCodester Best House Rental Management System 1.0 and classified as critical. This issue affects some unknown processing of the file view_payment.php. The manipulation of the argument id leads to sql injection. The attack may be initiated remotely. The exploit has been disclosed to the public and may be used. The identifier VDB-265073 was assigned to this vulnerability.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-7">May 18, 2024; 4:15:16 PM -0400</span>
+<p data-testid="vuln-summary-7">In the Linux kernel, the following vulnerability has been resolved:
+
+tcp: properly terminate timers for kernel sockets
+
+We had various syzbot reports about tcp timers firing after
+the corresponding netns has been dismantled.
+
+Fortunately Josef Bacik could trigger the issue more often,
+and could test a patch I wrote two years ago.
+
+When TCP sockets are closed, we call inet_csk_clear_xmit_timers()
+to 'stop' the timers.
+
+inet_csk_clear_xmit_timers() can be called from any context,
+including when socket lock is held.
+This is the reason it uses sk_stop_timer(), aka del_timer().
+This means that ongoing timers might finish much later.
+
+For user sockets, this is fine because each running timer
+holds a reference on the socket, and the user socket holds
+a reference on the netns.
+
+For kernel sockets, we risk that the netns is freed before
+timer can complete, because kernel sockets do not hold
+reference on the netns.
+
+This patch adds inet_csk_clear_xmit_timers_sync() function
+that using sk_stop_timer_sync() to make sure all timers
+are terminated before the kernel socket is released.
+Modules using kernel sockets close them in their netns exit()
+handler.
+
+Also add sock_not_owned_by_me() helper to get LOCKDEP
+support : inet_csk_clear_xmit_timers_sync() must not be called
+while socket lock is held.
+
+It is very possible we can revert in the future commit
+3a58f13a881e ("net: rds: acquire refcount on TCP sockets")
+which attempted to solve the issue in rds only.
+(net/smc/af_smc.c and net/mptcp/subflow.c have similar code)
+
+We probably can remove the check_net() tests from
+tcp_out_of_resources() and __tcp_close() in the future.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-7">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -176,10 +396,62 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-8">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-8" href="/vuln/detail/CVE-2024-36043">CVE-2024-36043</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-8" href="/vuln/detail/CVE-2024-35909">CVE-2024-35909</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-8">question_image.ts in SurveyJS Form Library before 1.10.4 allows contentMode=youtube XSS via the imageLink property.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-8">May 18, 2024; 4:15:15 PM -0400</span>
+<p data-testid="vuln-summary-8">In the Linux kernel, the following vulnerability has been resolved:
+
+net: wwan: t7xx: Split 64bit accesses to fix alignment issues
+
+Some of the registers are aligned on a 32bit boundary, causing
+alignment faults on 64bit platforms.
+
+ Unable to handle kernel paging request at virtual address ffffffc084a1d004
+ Mem abort info:
+ ESR = 0x0000000096000061
+ EC = 0x25: DABT (current EL), IL = 32 bits
+ SET = 0, FnV = 0
+ EA = 0, S1PTW = 0
+ FSC = 0x21: alignment fault
+ Data abort info:
+ ISV = 0, ISS = 0x00000061, ISS2 = 0x00000000
+ CM = 0, WnR = 1, TnD = 0, TagAccess = 0
+ GCS = 0, Overlay = 0, DirtyBit = 0, Xs = 0
+ swapper pgtable: 4k pages, 39-bit VAs, pgdp=0000000046ad6000
+ [ffffffc084a1d004] pgd=100000013ffff003, p4d=100000013ffff003, pud=100000013ffff003, pmd=0068000020a00711
+ Internal error: Oops: 0000000096000061 [#1] SMP
+ Modules linked in: mtk_t7xx(+) qcserial pppoe ppp_async option nft_fib_inet nf_flow_table_inet mt7921u(O) mt7921s(O) mt7921e(O) mt7921_common(O) iwlmvm(O) iwldvm(O) usb_wwan rndis_host qmi_wwan pppox ppp_generic nft_reject_ipv6 nft_reject_ipv4 nft_reject_inet nft_reject nft_redir nft_quota nft_numgen nft_nat nft_masq nft_log nft_limit nft_hash nft_flow_offload nft_fib_ipv6 nft_fib_ipv4 nft_fib nft_ct nft_chain_nat nf_tables nf_nat nf_flow_table nf_conntrack mt7996e(O) mt792x_usb(O) mt792x_lib(O) mt7915e(O) mt76_usb(O) mt76_sdio(O) mt76_connac_lib(O) mt76(O) mac80211(O) iwlwifi(O) huawei_cdc_ncm cfg80211(O) cdc_ncm cdc_ether wwan usbserial usbnet slhc sfp rtc_pcf8563 nfnetlink nf_reject_ipv6 nf_reject_ipv4 nf_log_syslog nf_defrag_ipv6 nf_defrag_ipv4 mt6577_auxadc mdio_i2c libcrc32c compat(O) cdc_wdm cdc_acm at24 crypto_safexcel pwm_fan i2c_gpio i2c_smbus industrialio i2c_algo_bit i2c_mux_reg i2c_mux_pca954x i2c_mux_pca9541 i2c_mux_gpio i2c_mux dummy oid_registry tun sha512_arm64 sha1_ce sha1_generic seqiv
+ md5 geniv des_generic libdes cbc authencesn authenc leds_gpio xhci_plat_hcd xhci_pci xhci_mtk_hcd xhci_hcd nvme nvme_core gpio_button_hotplug(O) dm_mirror dm_region_hash dm_log dm_crypt dm_mod dax usbcore usb_common ptp aquantia pps_core mii tpm encrypted_keys trusted
+ CPU: 3 PID: 5266 Comm: kworker/u9:1 Tainted: G O 6.6.22 #0
+ Hardware name: Bananapi BPI-R4 (DT)
+ Workqueue: md_hk_wq t7xx_fsm_uninit [mtk_t7xx]
+ pstate: 804000c5 (Nzcv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+ pc : t7xx_cldma_hw_set_start_addr+0x1c/0x3c [mtk_t7xx]
+ lr : t7xx_cldma_start+0xac/0x13c [mtk_t7xx]
+ sp : ffffffc085d63d30
+ x29: ffffffc085d63d30 x28: 0000000000000000 x27: 0000000000000000
+ x26: 0000000000000000 x25: ffffff80c804f2c0 x24: ffffff80ca196c05
+ x23: 0000000000000000 x22: ffffff80c814b9b8 x21: ffffff80c814b128
+ x20: 0000000000000001 x19: ffffff80c814b080 x18: 0000000000000014
+ x17: 0000000055c9806b x16: 000000007c5296d0 x15: 000000000f6bca68
+ x14: 00000000dbdbdce4 x13: 000000001aeaf72a x12: 0000000000000001
+ x11: 0000000000000000 x10: 0000000000000000 x9 : 0000000000000000
+ x8 : ffffff80ca1ef6b4 x7 : ffffff80c814b818 x6 : 0000000000000018
+ x5 : 0000000000000870 x4 : 0000000000000000 x3 : 0000000000000000
+ x2 : 000000010a947000 x1 : ffffffc084a1d004 x0 : ffffffc084a1d004
+ Call trace:
+ t7xx_cldma_hw_set_start_addr+0x1c/0x3c [mtk_t7xx]
+ t7xx_fsm_uninit+0x578/0x5ec [mtk_t7xx]
+ process_one_work+0x154/0x2a0
+ worker_thread+0x2ac/0x488
+ kthread+0xe0/0xec
+ ret_from_fork+0x10/0x20
+ Code: f9400800 91001000 8b214001 d50332bf (f9000022)
+ ---[ end trace 0000000000000000 ]---
+
+The inclusion of io-64-nonatomic-lo-hi.h indicates that all 64bit
+accesses can be replaced by pairs of nonatomic 32bit access.  Fix
+alignment by forcing all accesses to be 32bit on 64bit platforms.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-8">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -197,10 +469,19 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-9">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-9" href="/vuln/detail/CVE-2024-5093">CVE-2024-5093</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-9" href="/vuln/detail/CVE-2024-35908">CVE-2024-35908</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-9">A vulnerability has been found in SourceCodester Best House Rental Management System 1.0 and classified as critical. This vulnerability affects unknown code of the file login.php. The manipulation of the argument username/password leads to sql injection. The attack can be initiated remotely. The exploit has been disclosed to the public and may be used. The identifier of this vulnerability is VDB-265072.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-9">May 18, 2024; 3:15:49 PM -0400</span>
+<p data-testid="vuln-summary-9">In the Linux kernel, the following vulnerability has been resolved:
+
+tls: get psock ref after taking rxlock to avoid leak
+
+At the start of tls_sw_recvmsg, we take a reference on the psock, and
+then call tls_rx_reader_lock. If that fails, we return directly
+without releasing the reference.
+
+Instead of adding a new label, just take the reference after locking
+has succeeded, since we don't need it before.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-9">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -218,10 +499,103 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-10">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-10" href="/vuln/detail/CVE-2024-34083">CVE-2024-34083</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-10" href="/vuln/detail/CVE-2024-35907">CVE-2024-35907</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-10">aiosmptd is  a reimplementation of the Python stdlib smtpd.py based on asyncio. Prior to version 1.4.6, servers based on aiosmtpd accept extra unencrypted commands after STARTTLS, treating them as if they came from inside the encrypted connection. This could be exploited by a man-in-the-middle attack. Version 1.4.6 contains a patch for the issue.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-10">May 18, 2024; 3:15:49 PM -0400</span>
+<p data-testid="vuln-summary-10">In the Linux kernel, the following vulnerability has been resolved:
+
+mlxbf_gige: call request_irq() after NAPI initialized
+
+The mlxbf_gige driver encounters a NULL pointer exception in
+mlxbf_gige_open() when kdump is enabled.  The sequence to reproduce
+the exception is as follows:
+a) enable kdump
+b) trigger kdump via "echo c &gt; /proc/sysrq-trigger"
+c) kdump kernel executes
+d) kdump kernel loads mlxbf_gige module
+e) the mlxbf_gige module runs its open() as the
+   the "oob_net0" interface is brought up
+f) mlxbf_gige module will experience an exception
+   during its open(), something like:
+
+     Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000
+     Mem abort info:
+       ESR = 0x0000000086000004
+       EC = 0x21: IABT (current EL), IL = 32 bits
+       SET = 0, FnV = 0
+       EA = 0, S1PTW = 0
+       FSC = 0x04: level 0 translation fault
+     user pgtable: 4k pages, 48-bit VAs, pgdp=00000000e29a4000
+     [0000000000000000] pgd=0000000000000000, p4d=0000000000000000
+     Internal error: Oops: 0000000086000004 [#1] SMP
+     CPU: 0 PID: 812 Comm: NetworkManager Tainted: G           OE     5.15.0-1035-bluefield #37-Ubuntu
+     Hardware name: https://www.mellanox.com BlueField-3 SmartNIC Main Card/BlueField-3 SmartNIC Main Card, BIOS 4.6.0.13024 Jan 19 2024
+     pstate: 80400009 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+     pc : 0x0
+     lr : __napi_poll+0x40/0x230
+     sp : ffff800008003e00
+     x29: ffff800008003e00 x28: 0000000000000000 x27: 00000000ffffffff
+     x26: ffff000066027238 x25: ffff00007cedec00 x24: ffff800008003ec8
+     x23: 000000000000012c x22: ffff800008003eb7 x21: 0000000000000000
+     x20: 0000000000000001 x19: ffff000066027238 x18: 0000000000000000
+     x17: ffff578fcb450000 x16: ffffa870b083c7c0 x15: 0000aaab010441d0
+     x14: 0000000000000001 x13: 00726f7272655f65 x12: 6769675f6662786c
+     x11: 0000000000000000 x10: 0000000000000000 x9 : ffffa870b0842398
+     x8 : 0000000000000004 x7 : fe5a48b9069706ea x6 : 17fdb11fc84ae0d2
+     x5 : d94a82549d594f35 x4 : 0000000000000000 x3 : 0000000000400100
+     x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff000066027238
+     Call trace:
+      0x0
+      net_rx_action+0x178/0x360
+      __do_softirq+0x15c/0x428
+      __irq_exit_rcu+0xac/0xec
+      irq_exit+0x18/0x2c
+      handle_domain_irq+0x6c/0xa0
+      gic_handle_irq+0xec/0x1b0
+      call_on_irq_stack+0x20/0x2c
+      do_interrupt_handler+0x5c/0x70
+      el1_interrupt+0x30/0x50
+      el1h_64_irq_handler+0x18/0x2c
+      el1h_64_irq+0x7c/0x80
+      __setup_irq+0x4c0/0x950
+      request_threaded_irq+0xf4/0x1bc
+      mlxbf_gige_request_irqs+0x68/0x110 [mlxbf_gige]
+      mlxbf_gige_open+0x5c/0x170 [mlxbf_gige]
+      __dev_open+0x100/0x220
+      __dev_change_flags+0x16c/0x1f0
+      dev_change_flags+0x2c/0x70
+      do_setlink+0x220/0xa40
+      __rtnl_newlink+0x56c/0x8a0
+      rtnl_newlink+0x58/0x84
+      rtnetlink_rcv_msg+0x138/0x3c4
+      netlink_rcv_skb+0x64/0x130
+      rtnetlink_rcv+0x20/0x30
+      netlink_unicast+0x2ec/0x360
+      netlink_sendmsg+0x278/0x490
+      __sock_sendmsg+0x5c/0x6c
+      ____sys_sendmsg+0x290/0x2d4
+      ___sys_sendmsg+0x84/0xd0
+      __sys_sendmsg+0x70/0xd0
+      __arm64_sys_sendmsg+0x2c/0x40
+      invoke_syscall+0x78/0x100
+      el0_svc_common.constprop.0+0x54/0x184
+      do_el0_svc+0x30/0xac
+      el0_svc+0x48/0x160
+      el0t_64_sync_handler+0xa4/0x12c
+      el0t_64_sync+0x1a4/0x1a8
+     Code: bad PC value
+     ---[ end trace 7d1c3f3bf9d81885 ]---
+     Kernel panic - not syncing: Oops: Fatal exception in interrupt
+     Kernel Offset: 0x2870a7a00000 from 0xffff800008000000
+     PHYS_OFFSET: 0x80000000
+     CPU features: 0x0,000005c1,a3332a5a
+     Memory Limit: none
+     ---[ end Kernel panic - not syncing: Oops: Fatal exception in interrupt ]---
+
+The exception happens because there is a pending RX interrupt before the
+call to request_irq(RX IRQ) executes.  Then, the RX IRQ handler fires
+immediately after this request_irq() completes. The
+---truncated---</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-10">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -239,10 +613,21 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-11">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-11" href="/vuln/detail/CVE-2024-31879">CVE-2024-31879</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-11" href="/vuln/detail/CVE-2024-35906">CVE-2024-35906</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-11">IBM i 7.2, 7.3, and 7.4 could allow a remote attacker to execute arbitrary code leading to a denial of service of network ports on the system, caused by the deserialization of untrusted data.  IBM X-Force ID:  287539.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-11">May 18, 2024; 12:15:47 PM -0400</span>
+<p data-testid="vuln-summary-11">In the Linux kernel, the following vulnerability has been resolved:
+
+drm/amd/display: Send DTBCLK disable message on first commit
+
+[Why]
+Previous patch to allow DTBCLK disable didn't address boot case. Driver
+thinks DTBCLK is disabled by default, so we don't send disable message to
+PMFW. DTBCLK is then enabled at idle desktop on boot, burning power.
+
+[How]
+Set dtbclk_en to true on boot so that disable message is sent during first
+commit.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-11">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -260,10 +645,24 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-12">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-12" href="/vuln/detail/CVE-2024-3745">CVE-2024-3745</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-12" href="/vuln/detail/CVE-2024-35905">CVE-2024-35905</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-12">MSI Afterburner v4.6.6.16381 Beta 3 is vulnerable to an ACL Bypass vulnerability in the RTCore64.sys driver, which leads to triggering vulnerabilities like CVE-2024-1443 and CVE-2024-1460 from a low privileged user.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-12">May 18, 2024; 9:15:49 AM -0400</span>
+<p data-testid="vuln-summary-12">In the Linux kernel, the following vulnerability has been resolved:
+
+bpf: Protect against int overflow for stack access size
+
+This patch re-introduces protection against the size of access to stack
+memory being negative; the access size can appear negative as a result
+of overflowing its signed int representation. This should not actually
+happen, as there are other protections along the way, but we should
+protect against it anyway. One code path was missing such protections
+(fixed in the previous patch in the series), causing out-of-bounds array
+accesses in check_stack_range_initialized(). This patch causes the
+verification of a program with such a non-sensical access size to fail.
+
+This check used to exist in a more indirect way, but was inadvertendly
+removed in a833a17aeac7.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-12">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -271,10 +670,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-danger" data-testid="vuln-cvss3-link-12" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-3745&amp;vector=AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&amp;version=3.1&amp;source=Fluid%20Attacks">7.8 HIGH</a>
-<br/>
+<span data-testid="vuln-cvss3-na-12" id="Cvss3NAText-12">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-12" id="Cvss2NAText-12">
@@ -283,10 +680,17 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-13">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-13" href="/vuln/detail/CVE-2024-5088">CVE-2024-5088</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-13" href="/vuln/detail/CVE-2024-35904">CVE-2024-35904</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-13">The Happy Addons for Elementor plugin for WordPress is vulnerable to Stored Cross-Site Scripting via the ‘_id’ parameter in all versions up to, and including, 3.10.8 due to insufficient input sanitization and output escaping. This makes it possible for authenticated attackers, with Contributor-level access and above, to inject arbitrary web scripts in pages that will execute whenever a user accesses an injected page.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-13">May 18, 2024; 8:15:47 AM -0400</span>
+<p data-testid="vuln-summary-13">In the Linux kernel, the following vulnerability has been resolved:
+
+selinux: avoid dereference of garbage after mount failure
+
+In case kern_mount() fails and returns an error pointer return in the
+error branch instead of continuing and dereferencing the error pointer.
+
+While on it drop the never read static variable selinuxfs_mount.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-13">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -294,10 +698,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-warning" data-testid="vuln-cvss3-link-13" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-5088&amp;vector=AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:N&amp;version=3.1&amp;source=Wordfence">6.4 MEDIUM</a>
-<br/>
+<span data-testid="vuln-cvss3-na-13" id="Cvss3NAText-13">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-13" id="Cvss2NAText-13">
@@ -306,10 +708,16 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-14">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-14" href="/vuln/detail/CVE-2024-4432">CVE-2024-4432</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-14" href="/vuln/detail/CVE-2024-35903">CVE-2024-35903</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-14">The Piotnet Addons For Elementor plugin for WordPress is vulnerable to Stored Cross-Site Scripting via the plugin's widgets in all versions up to, and including, 2.4.26 due to insufficient input sanitization and output escaping on user supplied attributes. This makes it possible for authenticated attackers, with contributor-level access and above, to inject arbitrary web scripts in pages that will execute whenever a user accesses an injected page.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-14">May 18, 2024; 6:15:08 AM -0400</span>
+<p data-testid="vuln-summary-14">In the Linux kernel, the following vulnerability has been resolved:
+
+x86/bpf: Fix IP after emitting call depth accounting
+
+Adjust the IP passed to `emit_patch` so it calculates the correct offset
+for the CALL instruction if `x86_call_depth_emit_accounting` emits code.
+Otherwise we will skip some instructions and most likely crash.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-14">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -317,10 +725,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-warning" data-testid="vuln-cvss3-link-14" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-4432&amp;vector=AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:N&amp;version=3.1&amp;source=Wordfence">6.4 MEDIUM</a>
-<br/>
+<span data-testid="vuln-cvss3-na-14" id="Cvss3NAText-14">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-14" id="Cvss2NAText-14">
@@ -329,10 +735,47 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-15">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-15" href="/vuln/detail/CVE-2024-3658">CVE-2024-3658</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-15" href="/vuln/detail/CVE-2024-35902">CVE-2024-35902</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-15">The Build App Online plugin for WordPress is vulnerable to authentication bypass in versions up to, and including, 1.0.21. This is due to missing authentication checking in the 'set_user_cart' function with the 'user_id' header value. This makes it possible for unauthenticated attackers to log in as any existing user on the site, such as an administrator, if they have access to the user id.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-15">May 18, 2024; 6:15:07 AM -0400</span>
+<p data-testid="vuln-summary-15">In the Linux kernel, the following vulnerability has been resolved:
+
+net/rds: fix possible cp null dereference
+
+cp might be null, calling cp-&gt;cp_conn would produce null dereference
+
+[Simon Horman adds:]
+
+Analysis:
+
+* cp is a parameter of __rds_rdma_map and is not reassigned.
+
+* The following call-sites pass a NULL cp argument to __rds_rdma_map()
+
+  - rds_get_mr()
+  - rds_get_mr_for_dest
+
+* Prior to the code above, the following assumes that cp may be NULL
+  (which is indicative, but could itself be unnecessary)
+
+	trans_private = rs-&gt;rs_transport-&gt;get_mr(
+		sg, nents, rs, &amp;mr-&gt;r_key, cp ? cp-&gt;cp_conn : NULL,
+		args-&gt;vec.addr, args-&gt;vec.bytes,
+		need_odp ? ODP_ZEROBASED : ODP_NOT_NEEDED);
+
+* The code modified by this patch is guarded by IS_ERR(trans_private),
+  where trans_private is assigned as per the previous point in this analysis.
+
+  The only implementation of get_mr that I could locate is rds_ib_get_mr()
+  which can return an ERR_PTR if the conn (4th) argument is NULL.
+
+* ret is set to PTR_ERR(trans_private).
+  rds_ib_get_mr can return ERR_PTR(-ENODEV) if the conn (4th) argument is NULL.
+  Thus ret may be -ENODEV in which case the code in question will execute.
+
+Conclusion:
+* cp may be NULL at the point where this patch adds a check;
+  this patch does seem to address a possible bug</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-15">May 19, 2024; 5:15:11 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -340,10 +783,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-critical" data-testid="vuln-cvss3-link-15" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-3658&amp;vector=AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&amp;version=3.1&amp;source=Wordfence">9.8 CRITICAL</a>
-<br/>
+<span data-testid="vuln-cvss3-na-15" id="Cvss3NAText-15">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-15" id="Cvss2NAText-15">
@@ -352,10 +793,36 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-16">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-16" href="/vuln/detail/CVE-2024-4709">CVE-2024-4709</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-16" href="/vuln/detail/CVE-2024-35901">CVE-2024-35901</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-16">The Contact Form Plugin by Fluent Forms for Quiz, Survey, and Drag &amp; Drop WP Form Builder plugin for WordPress is vulnerable to Stored Cross-Site Scripting via the ‘subject’ parameter in versions up to, and including, 5.1.16 due to insufficient input sanitization and output escaping. This makes it possible for authenticated attackers, with contributor-level permissions and above, and access granted by an administrator, to inject arbitrary web scripts in pages that will execute whenever a user accesses an injected page.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-16">May 18, 2024; 4:15:08 AM -0400</span>
+<p data-testid="vuln-summary-16">In the Linux kernel, the following vulnerability has been resolved:
+
+net: mana: Fix Rx DMA datasize and skb_over_panic
+
+mana_get_rxbuf_cfg() aligns the RX buffer's DMA datasize to be
+multiple of 64. So a packet slightly bigger than mtu+14, say 1536,
+can be received and cause skb_over_panic.
+
+Sample dmesg:
+[ 5325.237162] skbuff: skb_over_panic: text:ffffffffc043277a len:1536 put:1536 head:ff1100018b517000 data:ff1100018b517100 tail:0x700 end:0x6ea dev:&lt;NULL&gt;
+[ 5325.243689] ------------[ cut here ]------------
+[ 5325.245748] kernel BUG at net/core/skbuff.c:192!
+[ 5325.247838] invalid opcode: 0000 [#1] PREEMPT SMP NOPTI
+[ 5325.258374] RIP: 0010:skb_panic+0x4f/0x60
+[ 5325.302941] Call Trace:
+[ 5325.304389]  &lt;IRQ&gt;
+[ 5325.315794]  ? skb_panic+0x4f/0x60
+[ 5325.317457]  ? asm_exc_invalid_op+0x1f/0x30
+[ 5325.319490]  ? skb_panic+0x4f/0x60
+[ 5325.321161]  skb_put+0x4e/0x50
+[ 5325.322670]  mana_poll+0x6fa/0xb50 [mana]
+[ 5325.324578]  __napi_poll+0x33/0x1e0
+[ 5325.326328]  net_rx_action+0x12e/0x280
+
+As discussed internally, this alignment is not necessary. To fix
+this bug, remove it from the code. So oversized packets will be
+marked as CQE_RX_TRUNCATED by NIC, and dropped.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-16">May 19, 2024; 5:15:10 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -363,10 +830,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-danger" data-testid="vuln-cvss3-link-16" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-4709&amp;vector=AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N&amp;version=3.1&amp;source=Wordfence">7.2 HIGH</a>
-<br/>
+<span data-testid="vuln-cvss3-na-16" id="Cvss3NAText-16">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-16" id="Cvss2NAText-16">
@@ -375,10 +840,43 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-17">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-17" href="/vuln/detail/CVE-2024-4698">CVE-2024-4698</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-17" href="/vuln/detail/CVE-2024-35900">CVE-2024-35900</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-17">The Testimonial Carousel For Elementor plugin for WordPress is vulnerable to Stored Cross-Site Scripting via the 'show_line_text ' and 'slide_button_hover_animation' parameters in versions up to, and including, 10.1.1 due to insufficient input sanitization and output escaping. This makes it possible for authenticated attackers, with contributor-level permissions and above, to inject arbitrary web scripts in pages that will execute whenever a user accesses an injected page.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-17">May 18, 2024; 4:15:08 AM -0400</span>
+<p data-testid="vuln-summary-17">In the Linux kernel, the following vulnerability has been resolved:
+
+netfilter: nf_tables: reject new basechain after table flag update
+
+When dormant flag is toggled, hooks are disabled in the commit phase by
+iterating over current chains in table (existing and new).
+
+The following configuration allows for an inconsistent state:
+
+  add table x
+  add chain x y { type filter hook input priority 0; }
+  add table x { flags dormant; }
+  add chain x w { type filter hook input priority 1; }
+
+which triggers the following warning when trying to unregister chain w
+which is already unregistered.
+
+[  127.322252] WARNING: CPU: 7 PID: 1211 at net/netfilter/core.c:50                                                                     1 __nf_unregister_net_hook+0x21a/0x260
+[...]
+[  127.322519] Call Trace:
+[  127.322521]  &lt;TASK&gt;
+[  127.322524]  ? __warn+0x9f/0x1a0
+[  127.322531]  ? __nf_unregister_net_hook+0x21a/0x260
+[  127.322537]  ? report_bug+0x1b1/0x1e0
+[  127.322545]  ? handle_bug+0x3c/0x70
+[  127.322552]  ? exc_invalid_op+0x17/0x40
+[  127.322556]  ? asm_exc_invalid_op+0x1a/0x20
+[  127.322563]  ? kasan_save_free_info+0x3b/0x60
+[  127.322570]  ? __nf_unregister_net_hook+0x6a/0x260
+[  127.322577]  ? __nf_unregister_net_hook+0x21a/0x260
+[  127.322583]  ? __nf_unregister_net_hook+0x6a/0x260
+[  127.322590]  ? __nf_tables_unregister_hook+0x8a/0xe0 [nf_tables]
+[  127.322655]  nft_table_disable+0x75/0xf0 [nf_tables]
+[  127.322717]  nf_tables_commit+0x2571/0x2620 [nf_tables]</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-17">May 19, 2024; 5:15:10 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -386,10 +884,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-warning" data-testid="vuln-cvss3-link-17" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-4698&amp;vector=AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:N&amp;version=3.1&amp;source=Wordfence">6.4 MEDIUM</a>
-<br/>
+<span data-testid="vuln-cvss3-na-17" id="Cvss3NAText-17">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-17" id="Cvss2NAText-17">
@@ -398,10 +894,94 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-18">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-18" href="/vuln/detail/CVE-2024-2782">CVE-2024-2782</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-18" href="/vuln/detail/CVE-2024-35899">CVE-2024-35899</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-18">The Contact Form Plugin by Fluent Forms for Quiz, Survey, and Drag &amp; Drop WP Form Builder plugin for WordPress is vulnerable to unauthorized modification of data due to a missing capability check on the /wp-json/fluentform/v1/global-settings REST API endpoint in all versions up to, and including, 5.1.16. This makes it possible for unauthenticated attackers to modify all of the plugin's settings.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-18">May 18, 2024; 4:15:07 AM -0400</span>
+<p data-testid="vuln-summary-18">In the Linux kernel, the following vulnerability has been resolved:
+
+netfilter: nf_tables: flush pending destroy work before exit_net release
+
+Similar to 2c9f0293280e ("netfilter: nf_tables: flush pending destroy
+work before netlink notifier") to address a race between exit_net and
+the destroy workqueue.
+
+The trace below shows an element to be released via destroy workqueue
+while exit_net path (triggered via module removal) has already released
+the set that is used in such transaction.
+
+[ 1360.547789] BUG: KASAN: slab-use-after-free in nf_tables_trans_destroy_work+0x3f5/0x590 [nf_tables]
+[ 1360.547861] Read of size 8 at addr ffff888140500cc0 by task kworker/4:1/152465
+[ 1360.547870] CPU: 4 PID: 152465 Comm: kworker/4:1 Not tainted 6.8.0+ #359
+[ 1360.547882] Workqueue: events nf_tables_trans_destroy_work [nf_tables]
+[ 1360.547984] Call Trace:
+[ 1360.547991]  &lt;TASK&gt;
+[ 1360.547998]  dump_stack_lvl+0x53/0x70
+[ 1360.548014]  print_report+0xc4/0x610
+[ 1360.548026]  ? __virt_addr_valid+0xba/0x160
+[ 1360.548040]  ? __pfx__raw_spin_lock_irqsave+0x10/0x10
+[ 1360.548054]  ? nf_tables_trans_destroy_work+0x3f5/0x590 [nf_tables]
+[ 1360.548176]  kasan_report+0xae/0xe0
+[ 1360.548189]  ? nf_tables_trans_destroy_work+0x3f5/0x590 [nf_tables]
+[ 1360.548312]  nf_tables_trans_destroy_work+0x3f5/0x590 [nf_tables]
+[ 1360.548447]  ? __pfx_nf_tables_trans_destroy_work+0x10/0x10 [nf_tables]
+[ 1360.548577]  ? _raw_spin_unlock_irq+0x18/0x30
+[ 1360.548591]  process_one_work+0x2f1/0x670
+[ 1360.548610]  worker_thread+0x4d3/0x760
+[ 1360.548627]  ? __pfx_worker_thread+0x10/0x10
+[ 1360.548640]  kthread+0x16b/0x1b0
+[ 1360.548653]  ? __pfx_kthread+0x10/0x10
+[ 1360.548665]  ret_from_fork+0x2f/0x50
+[ 1360.548679]  ? __pfx_kthread+0x10/0x10
+[ 1360.548690]  ret_from_fork_asm+0x1a/0x30
+[ 1360.548707]  &lt;/TASK&gt;
+
+[ 1360.548719] Allocated by task 192061:
+[ 1360.548726]  kasan_save_stack+0x20/0x40
+[ 1360.548739]  kasan_save_track+0x14/0x30
+[ 1360.548750]  __kasan_kmalloc+0x8f/0xa0
+[ 1360.548760]  __kmalloc_node+0x1f1/0x450
+[ 1360.548771]  nf_tables_newset+0x10c7/0x1b50 [nf_tables]
+[ 1360.548883]  nfnetlink_rcv_batch+0xbc4/0xdc0 [nfnetlink]
+[ 1360.548909]  nfnetlink_rcv+0x1a8/0x1e0 [nfnetlink]
+[ 1360.548927]  netlink_unicast+0x367/0x4f0
+[ 1360.548935]  netlink_sendmsg+0x34b/0x610
+[ 1360.548944]  ____sys_sendmsg+0x4d4/0x510
+[ 1360.548953]  ___sys_sendmsg+0xc9/0x120
+[ 1360.548961]  __sys_sendmsg+0xbe/0x140
+[ 1360.548971]  do_syscall_64+0x55/0x120
+[ 1360.548982]  entry_SYSCALL_64_after_hwframe+0x55/0x5d
+
+[ 1360.548994] Freed by task 192222:
+[ 1360.548999]  kasan_save_stack+0x20/0x40
+[ 1360.549009]  kasan_save_track+0x14/0x30
+[ 1360.549019]  kasan_save_free_info+0x3b/0x60
+[ 1360.549028]  poison_slab_object+0x100/0x180
+[ 1360.549036]  __kasan_slab_free+0x14/0x30
+[ 1360.549042]  kfree+0xb6/0x260
+[ 1360.549049]  __nft_release_table+0x473/0x6a0 [nf_tables]
+[ 1360.549131]  nf_tables_exit_net+0x170/0x240 [nf_tables]
+[ 1360.549221]  ops_exit_list+0x50/0xa0
+[ 1360.549229]  free_exit_list+0x101/0x140
+[ 1360.549236]  unregister_pernet_operations+0x107/0x160
+[ 1360.549245]  unregister_pernet_subsys+0x1c/0x30
+[ 1360.549254]  nf_tables_module_exit+0x43/0x80 [nf_tables]
+[ 1360.549345]  __do_sys_delete_module+0x253/0x370
+[ 1360.549352]  do_syscall_64+0x55/0x120
+[ 1360.549360]  entry_SYSCALL_64_after_hwframe+0x55/0x5d
+
+(gdb) list *__nft_release_table+0x473
+0x1e033 is in __nft_release_table (net/netfilter/nf_tables_api.c:11354).
+11349           list_for_each_entry_safe(flowtable, nf, &amp;table-&gt;flowtables, list) {
+11350                   list_del(&amp;flowtable-&gt;list);
+11351                   nft_use_dec(&amp;table-&gt;use);
+11352                   nf_tables_flowtable_destroy(flowtable);
+11353           }
+11354           list_for_each_entry_safe(set, ns, &amp;table-&gt;sets, list) {
+11355                   list_del(&amp;set-&gt;list);
+11356                   nft_use_dec(&amp;table-&gt;use);
+11357                   if (set-&gt;flags &amp; (NFT_SET_MAP | NFT_SET_OBJECT))
+11358                           nft_map_deactivat
+---truncated---</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-18">May 19, 2024; 5:15:10 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -409,10 +989,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-danger" data-testid="vuln-cvss3-link-18" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-2782&amp;vector=AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N&amp;version=3.1&amp;source=Wordfence">7.5 HIGH</a>
-<br/>
+<span data-testid="vuln-cvss3-na-18" id="Cvss3NAText-18">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-18" id="Cvss2NAText-18">
@@ -421,10 +999,22 @@
 </td>
 </tr>
 <tr data-testid="vuln-row-19">
-<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-19" href="/vuln/detail/CVE-2024-2772">CVE-2024-2772</a></strong><br/></th>
+<th nowrap="nowrap"><strong><a data-testid="vuln-detail-link-19" href="/vuln/detail/CVE-2024-35898">CVE-2024-35898</a></strong><br/></th>
 <td>
-<p data-testid="vuln-summary-19">The Contact Form Plugin by Fluent Forms for Quiz, Survey, and Drag &amp; Drop WP Form Builder plugin for WordPress is vulnerable to Stored Cross-Site Scripting via form settings in all versions up to, and including, 5.1.13 due to insufficient input sanitization and output escaping. This makes it possible for authenticated attackers, with access to the Fluent Forms settings, to inject arbitrary web scripts in pages that will execute whenever a user accesses an injected page. This can be chained with CVE-2024-2771 for a low-privileged user to inject malicious web scripts.</p> <strong>Published:</strong>
-<span data-testid="vuln-published-on-19">May 18, 2024; 4:15:07 AM -0400</span>
+<p data-testid="vuln-summary-19">In the Linux kernel, the following vulnerability has been resolved:
+
+netfilter: nf_tables: Fix potential data-race in __nft_flowtable_type_get()
+
+nft_unregister_flowtable_type() within nf_flow_inet_module_exit() can
+concurrent with __nft_flowtable_type_get() within nf_tables_newflowtable().
+And thhere is not any protection when iterate over nf_tables_flowtables
+list in __nft_flowtable_type_get(). Therefore, there is pertential
+data-race of nf_tables_flowtables list entry.
+
+Use list_for_each_entry_rcu() to iterate over nf_tables_flowtables list
+in __nft_flowtable_type_get(), and use rcu_read_lock() in the caller
+nft_flowtable_type_get() to protect the entire type query process.</p> <strong>Published:</strong>
+<span data-testid="vuln-published-on-19">May 19, 2024; 5:15:10 AM -0400</span>
 </td>
 <td nowrap="nowrap">
 <!-- CVSS v4.0 -->
@@ -432,10 +1022,8 @@
 <em>V4.0:</em>(not available)<br>
 </br></span>
 <!-- CVSS v3.0 -->
-<span id="cvss3-link">
-<em>V3.1:</em>
-<a class="label label-warning" data-testid="vuln-cvss3-link-19" href="/vuln-metrics/cvss/v3-calculator?name=CVE-2024-2772&amp;vector=AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:N&amp;version=3.1&amp;source=Wordfence">6.4 MEDIUM</a>
-<br/>
+<span data-testid="vuln-cvss3-na-19" id="Cvss3NAText-19">
+<em>V3.x:</em>(not available)<br/>
 </span>
 <!-- CVSS v2.0 -->
 <span data-testid="vuln-cvss2-na-19" id="Cvss2NAText-19">

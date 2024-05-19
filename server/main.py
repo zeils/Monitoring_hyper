@@ -1,5 +1,3 @@
-import json
-import os
 import requests
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
@@ -8,10 +6,13 @@ from bs4 import BeautifulSoup
 import threading
 import time
 import schedule
+import re
+from datetime import datetime, timezone, timedelta
+
 
 app = Flask(__name__)
 CORS(app)
-refresh_time = 10 #Обновление актуальных угроз раз в refresh_time минут
+refresh_time = 1 #Обновление актуальных угроз раз в refresh_time минут
 
 def download_cve_html():
     url = 'https://nvd.nist.gov/vuln/search/results?results_type=overview&search_type=last3months&form_type=Basic&isCpeNameSearch=false&orderBy=publishDate&orderDir=desc'
@@ -63,8 +64,68 @@ def download_vmware_html():
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
+def find_dates_in_vmware_html():
+    file_path = 'vmware.html'
+    dates = []
+    with open(file_path, 'r') as file:
+        content = file.read()
+        date_pattern = re.compile(r'<pubDate>([A-Za-z]+), (\d{2}) ([A-Za-z]+) (\d{4}) (\d{2}):(\d{2}):(\d{2}) ([A-Z]{3})</pubDate>')
+        matches = date_pattern.findall(content)
+        most_recent_date = None
+        most_recent_date_str = None
+        for match in matches:
+            day, day_num, month, year, hour, minute, second, timezone_abbr = match
+            date_str = f"{day}, {day_num} {month} {year} {hour}:{minute}:{second}"
+            date_obj = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S")
+            if timezone_abbr == 'PDT':
+                timezone_offset = timedelta(hours=-7)  # Смещение для PDT
+            else:
+                timezone_offset = timedelta(hours=0)  # Для других временных зон
+            date_obj = date_obj.replace(tzinfo=timezone.utc) + timezone_offset
+            if most_recent_date is None or date_obj > most_recent_date:
+                most_recent_date = date_obj
+                most_recent_date_str = date_str
+    log = (f'The latest VMware vulnerability has been published: {most_recent_date}')
+    print(log)
+    check_and_append_log('vmware.log', log )
+
+def find_dates_in_cve_html():
+    filename = 'cve.html'
+    with open(filename, 'r') as file:
+        content = file.read()
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # Ищем все теги <span> с атрибутом data-testid, содержащим "vuln-published-on-"
+        date_spans = soup.find_all('span', {'data-testid': lambda x: x and 'vuln-published-on-' in x})
+
+        # Преобразуем даты в объекты datetime
+        dates = []
+        for span in date_spans:
+            date_str = span.text.strip()
+            dates.append(datetime.strptime(date_str, '%b %d, %Y; %I:%M:%S %p %z'))
+
+        # Находим самую недавнюю дату
+        latest_date = max(dates)
+        log = (f'The latest CVE vulnerability has been published: {latest_date}')
+        print(log)
+        check_and_append_log('cve.log', log )
+
+def check_and_append_log(filename, string):
+    try:
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+            last_line = lines[-1].strip() if lines else None
+    except FileNotFoundError:
+        last_line = None
+
+    if last_line != string:
+        with open(filename, 'a') as file:
+            file.write(string + '\n')
+
 schedule.every(refresh_time).minutes.do(download_cve_html)
 schedule.every(refresh_time).minutes.do(download_vmware_html)
+schedule.every(refresh_time).minutes.do(find_dates_in_vmware_html)
+schedule.every(refresh_time).minutes.do(find_dates_in_cve_html)
 
 def run_schedule():
     while True:
@@ -87,4 +148,7 @@ if __name__ == '__main__':
     schedule_thread.start()
     download_cve_html()
     download_vmware_html()
+    find_dates_in_vmware_html()
+    find_dates_in_cve_html()
+   
     app.run(debug=True, host='0.0.0.0', port=9000)
