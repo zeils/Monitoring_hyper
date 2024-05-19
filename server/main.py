@@ -5,25 +5,13 @@ from flask import Flask, render_template, jsonify
 from flask_cors import CORS
 from flask import send_file
 from bs4 import BeautifulSoup
+import threading
+import time
+import schedule
 
 app = Flask(__name__)
 CORS(app)
-
-def fetch_vulnerabilities():
-    url = 'https://services.nvd.nist.gov/rest/json/cves/2.0'
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        vulnerabilities_data = response.json()
-        script_directory = os.path.dirname(os.path.abspath(__file__))
-        save_path = os.path.join(script_directory, 'vulnerabilities.json')
-        
-        with open(save_path, 'w') as file:
-            json.dump(vulnerabilities_data, file, indent=4)
-        
-        print(f"Данные об уязвимостях успешно сохранены в {save_path}")
-    else:
-        print("Ошибка при получении данных об уязвимостях")
+refresh_time = 10 #Обновление актуальных угроз раз в refresh_time минут
 
 def download_cve_html():
     url = 'https://nvd.nist.gov/vuln/search/results?results_type=overview&search_type=last3months&form_type=Basic&isCpeNameSearch=false&orderBy=publishDate&orderDir=desc'
@@ -40,9 +28,9 @@ def download_cve_html():
             with open(filename, "w", encoding="utf-8") as file:
                 file.write(str(table))
             
-            print(f"Страница успешно сохранена в файл {filename}")
+            print(f"CVE уязвимости успешно сохранены в файл: {filename}")
         else:
-            print(f"Не удалось скачать страницу. Статус код: {response.status_code}")
+            print(f"CVE ошибка. Статус код: {response.status_code}")
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
@@ -69,23 +57,20 @@ def download_vmware_html():
         if response.status_code == 200:
             with open(filename, 'w', encoding='utf-8') as file:
                 file.write(response.text)
-            print("HTML-контент успешно сохранен в файл:", filename)
+            print("VMware уязвимости успешно сохранены в файл:", filename)
         else:
-            print("Ошибка при запросе:", response.status_code)
+            print("VMware ошибка:", response.status_code)
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
+schedule.every(refresh_time).minutes.do(download_cve_html)
+schedule.every(refresh_time).minutes.do(download_vmware_html)
 
+def run_schedule():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
-
-
-
-@app.route('/')
-def index():
-    with open('vulnerabilities.json', 'r') as file:
-        vulnerabilities_data = json.load(file)
-    
-    return render_template('vulnerabilities.html', vulnerabilities=vulnerabilities_data['vulnerabilities'])
 
 @app.route('/api/cve', methods=['GET'])
 def get_cve():
@@ -98,6 +83,8 @@ def get_vmware():
 
 
 if __name__ == '__main__':
+    schedule_thread = threading.Thread(target=run_schedule)
+    schedule_thread.start()
     download_cve_html()
     download_vmware_html()
     app.run(debug=True, host='0.0.0.0', port=9000)
