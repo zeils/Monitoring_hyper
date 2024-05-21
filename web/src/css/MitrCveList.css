@@ -1,0 +1,35 @@
+.mitr-cve-list {
+    margin: 20px 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Стиль для элементов списка */
+  
+  .mitr-cve-list-item {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .mitr-cve-list-item strong {
+    font-weight: bold;
+  }
+  
+  .mitr-cve-list-item hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-top: 1px solid #ccc;
+  }
+  
+  /* Стиль для ссылок */
+  
+  .mitr-cve-list-item a {
+    color: #009879;
+    text-decoration: none;
+  }
+  
+  .mitr-cve-list-item a:hover {
+    text-decoration: underline;
+  }

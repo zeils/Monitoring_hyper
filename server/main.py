@@ -39,6 +39,20 @@ def download_cve_html():
     except Exception as e:
         print(f"Произошла ошибка: {e}")
 
+def download_mitr_cve_html():
+    url = config['cve_mitr_url']
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open("mitr_cve.html", "w") as file:
+                file.write(response.text)
+            print("Данные успешно загружены и сохранены в файл 'mitr_cve.html'")
+        else:
+            print("Ошибка при загрузке данных:", response.status_code)
+    except Exception as e:
+        print("Ошибка:", e)
+
+
 def download_vmware_html():
     vmware_url = config['vmware_url']
     filename = 'vmware.html'
@@ -82,9 +96,9 @@ def find_dates_in_vmware_html():
             date_str = f"{day}, {day_num} {month} {year} {hour}:{minute}:{second}"
             date_obj = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S")
             if timezone_abbr == 'PDT':
-                timezone_offset = timedelta(hours=-7)  # Смещение для PDT
+                timezone_offset = timedelta(hours=-7)  
             else:
-                timezone_offset = timedelta(hours=0)  # Для других временных зон
+                timezone_offset = timedelta(hours=0)  
             date_obj = date_obj.replace(tzinfo=timezone.utc) + timezone_offset
             if most_recent_date is None or date_obj > most_recent_date:
                 most_recent_date = date_obj
@@ -92,6 +106,7 @@ def find_dates_in_vmware_html():
     log = (f'The latest VMware vulnerability has been published: {most_recent_date}')
     print(log)
     check_and_append_log('vmware.log', log )
+    return most_recent_date
 
 def find_dates_in_cve_html():
     filename = 'cve.html'
@@ -99,20 +114,45 @@ def find_dates_in_cve_html():
         content = file.read()
         soup = BeautifulSoup(content, 'html.parser')
         
-        # Ищем все теги <span> с атрибутом data-testid, содержащим "vuln-published-on-"
         date_spans = soup.find_all('span', {'data-testid': lambda x: x and 'vuln-published-on-' in x})
 
-        # Преобразуем даты в объекты datetime
+
         dates = []
         for span in date_spans:
             date_str = span.text.strip()
             dates.append(datetime.strptime(date_str, '%b %d, %Y; %I:%M:%S %p %z'))
 
-        # Находим самую недавнюю дату
+  
         latest_date = max(dates)
         log = (f'The latest CVE vulnerability has been published: {latest_date}')
         print(log)
         check_and_append_log('cve.log', log )
+        return latest_date
+
+def find_dates_in_mitr_cve_html():
+    try:
+        with open('mitr_cve.html', 'r') as file:
+            cve_data = json.load(file)
+        most_recent_published_date = None
+        for cve_entry in cve_data:
+
+            published_date_str = cve_entry.get('Published', '')
+            published_date = datetime.fromisoformat(published_date_str.replace('Z', '+00:00'))
+            
+            if most_recent_published_date is None or published_date > most_recent_published_date:
+                most_recent_published_date = published_date
+        
+        log = (f'The latest MITRE CVE vulnerability has been published: {most_recent_published_date}')
+        print(log)
+        check_and_append_log('mitr_cve.log', log )
+        return most_recent_published_date
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+
 
 def check_and_append_log(filename, string):
     try:
@@ -123,32 +163,15 @@ def check_and_append_log(filename, string):
         last_line = None
 
     if last_line != string:
-        #send_to_zabbix(string)
         with open(filename, 'a') as file:
             file.write(string + '\n')
 
-def send_to_zabbix(message):
-    import subprocess
-    
-    host = config['zabbix_host_server']
-    host_name = config['zabbix_host_service']
-    key = config['zabbix_key']
-    
-    # Команда для отправки данных в Zabbix
-    command = [
-        'zabbix_sender',
-        '-z', host,
-        '-s', host_name,
-        '-k', key,
-        '-o', message
-    ]
-    
-    # Выполнение команды
-    subprocess.run(command, check=True)
+
 
 
 refresh_time = config['refresh_time']
 schedule.every(refresh_time).minutes.do(download_cve_html)
+schedule.every(refresh_time).minutes.do(download_mitr_cve_html)
 schedule.every(refresh_time).minutes.do(download_vmware_html)
 schedule.every(refresh_time).minutes.do(find_dates_in_vmware_html)
 schedule.every(refresh_time).minutes.do(find_dates_in_cve_html)
@@ -168,13 +191,45 @@ def get_cve():
 def get_vmware():
     return send_file('vmware.html', mimetype='text/html')
 
+@app.route('/api/mitr_cve', methods=['GET'])
+def get_mitr_cve():
+    return send_file('mitr_cve.html', mimetype='text/html')
+
+
+@app.route('/api/last_nvd_cve', methods=['GET'])
+def last_cve():
+    last_cve_timestamp = find_dates_in_cve_html()
+    if last_cve_timestamp:
+        return jsonify({"last_nvd_cve": int(last_cve_timestamp.timestamp())})
+    else:
+        return jsonify({"last_nvd_cve": "No data available"})
+
+@app.route('/api/last_mitre_cve', methods=['GET'])
+def last_mitre():
+    last_mitre_timestamp = find_dates_in_mitr_cve_html()
+    if last_mitre_timestamp:
+        return jsonify({"last_mitre_cve": int(last_mitre_timestamp.timestamp())})
+    else:
+        return jsonify({"last_mitre_cve": "No data available"})
+
+@app.route('/api/last_vmware_cve', methods=['GET'])
+def last_vmware():
+    last_vmware_timestamp = find_dates_in_vmware_html()
+    if last_vmware_timestamp:
+        return jsonify({"last_vmware_cve": int(last_vmware_timestamp.timestamp())})
+    else:
+        return jsonify({"last_vmware_cve": "No data available"})
+
+
 
 if __name__ == '__main__':
     schedule_thread = threading.Thread(target=run_schedule)
     schedule_thread.start()
     download_cve_html()
     download_vmware_html()
+    download_mitr_cve_html()
     find_dates_in_vmware_html()
     find_dates_in_cve_html()
+    find_dates_in_mitr_cve_html()
    
     app.run(debug=True, host='0.0.0.0', port=9000)

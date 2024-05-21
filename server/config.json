@@ -1,8 +1,6 @@
 {
     "cve_url": "https://nvd.nist.gov/vuln/search/results?results_type=overview&search_type=last3months&form_type=Basic&isCpeNameSearch=false&orderBy=publishDate&orderDir=desc",
     "vmware_url": "https://www.vmware.com/security/advisories.xml",
-    "refresh_time": 1,
-    "zabbix_host_server": "zabbix_host_server",
-    "zabbix_host_service": "zabbix_host_service",
-    "zabbix_key": "zabbix_key"
+    "cve_mitr_url": "https://cve.circl.lu/api/last",
+    "refresh_time": 1
 }
