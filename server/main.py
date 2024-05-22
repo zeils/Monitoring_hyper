@@ -14,7 +14,7 @@ from functions.find import find_dates_in_vmware_cve_html
 
 app = Flask(__name__)
 CORS(app)
-
+data_path = './data/'
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
@@ -26,15 +26,15 @@ def run_schedule():
 
 @app.route('/api/download/nvd_cve', methods=['GET'])
 def get_cve():
-    return send_file(f'./data/{config['nvd_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config['nvd_filename']}', mimetype='text/html')
 
 @app.route('/api/download/vmware_cve', methods=['GET'])
 def get_vmware():
-    return send_file(f'./data/{config['vmware_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config['vmware_filename']}', mimetype='text/html')
 
 @app.route('/api/download/mitre_cve', methods=['GET'])
 def get_mitr_cve():
-    return send_file(f'./data/{config['mitre_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config['mitre_filename']}', mimetype='text/html')
 
 @app.route('/api/last_cve/all', methods=['GET'])
 def last_all_cve():

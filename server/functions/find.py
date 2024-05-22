@@ -2,20 +2,23 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
 import re
 import json
-from log import check_and_append_log
+from server.functions.logger import check_and_append_log
 
 
 with open('../config.json', 'r') as config_file:
     config = json.load(config_file)
 
+data_path = '../data/'
+log_path = '../data/log/'
+
 def find_dates_in_vmware_cve_html():
-    filename = '../data/' + config['vmware_filename']
+    filename = f'{data_path}{config['vmware_filename']}'
     dates = []
     with open(filename, 'r') as file:
         content = file.read()
         date_pattern = re.compile(r'<pubDate>([A-Za-z]+), (\d{2}) ([A-Za-z]+) (\d{4}) (\d{2}):(\d{2}):(\d{2}) ([A-Z]{3})</pubDate>')
         matches = date_pattern.findall(content)
-        most_recent_date = None
+        latest_date = None
         most_recent_date_str = None
         for match in matches:
             day, day_num, month, year, hour, minute, second, timezone_abbr = match
@@ -26,16 +29,16 @@ def find_dates_in_vmware_cve_html():
             else:
                 timezone_offset = timedelta(hours=0)  
             date_obj = date_obj.replace(tzinfo=timezone.utc) + timezone_offset
-            if most_recent_date is None or date_obj > most_recent_date:
-                most_recent_date = date_obj
+            if latest_date is None or date_obj > latest_date:
+                latest_date = date_obj
                 most_recent_date_str = date_str
-    log = (f'The latest VMware vulnerability has been published: {most_recent_date}')
+    log = (f'The latest VMware vulnerability has been published: {latest_date}')
     print(log)
-    check_and_append_log('../data/vmware.log', log )
-    return most_recent_date
+    check_and_append_log(f'{log_path}vmware_cve.log', log )
+    return latest_date
 
 def find_dates_in_nvd_cve_html():
-    filename = '../data/' + config['nvd_filename']
+    filename = f'{data_path}{config['nvd_filename']}'
     with open(filename, 'r') as file:
         content = file.read()
         soup = BeautifulSoup(content, 'html.parser')
@@ -48,26 +51,26 @@ def find_dates_in_nvd_cve_html():
         latest_date = max(dates)
         log = (f'The latest CVE vulnerability has been published: {latest_date}')
         print(log)
-        check_and_append_log('../data/cve.log', log )
+        check_and_append_log(f'{log_path}nvd_cve.log', log )
         return latest_date
 
 def find_dates_in_mitr_cve_html():
-    filename = '../data/' + config['mitre_filename']
+    filename = f'{data_path}{config['mitre_filename']}'
     try:
         with open(filename, 'r') as file:
             cve_data = json.load(file)
-        most_recent_published_date = None
+        latest_date = None
         for cve_entry in cve_data:
             published_date_str = cve_entry.get('Published', '')
             published_date = datetime.fromisoformat(published_date_str.replace('Z', '+00:00'))
             
-            if most_recent_published_date is None or published_date > most_recent_published_date:
-                most_recent_published_date = published_date
+            if latest_date is None or published_date > latest_date:
+                latest_date = published_date
         
-        log = (f'The latest MITRE CVE vulnerability has been published: {most_recent_published_date}')
+        log = (f'The latest MITRE CVE vulnerability has been published: {latest_date}')
         print(log)
-        check_and_append_log('../data/mitr_cve.log', log )
-        return most_recent_published_date
+        check_and_append_log(f'{log_path}mitr_cve.log', log )
+        return latest_date
 
     except Exception as e:
         print(f"Error: {e}")

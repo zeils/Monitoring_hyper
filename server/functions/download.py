@@ -5,8 +5,10 @@ import json
 with open('../config.json', 'r') as config_file:
     config = json.load(config_file)
 
+data_path = '../data/'
+
 def download_nvd_cve_html():
-    filename = '../data/' + config['nvd_filename']
+    filename = f'{data_path}{config['nvd_filename']}'
     cve_url = config['cve_nvd_url']
     try:
         response = requests.get(cve_url)
@@ -24,7 +26,7 @@ def download_nvd_cve_html():
         print(f"Произошла ошибка: {e}")
 
 def download_mitr_cve_html():
-    filename = '../data/' + config['mitre_filename']
+    filename = f'{data_path}{config['mitre_filename']}'
     url = config['cve_mitr_url']
     try:
         response = requests.get(url)
@@ -39,7 +41,7 @@ def download_mitr_cve_html():
 
 def download_vmware_cve_html():
     vmware_url = config['cve_vmware_url']
-    filename = '../data/' + config['vmware_filename']
+    filename = f'{data_path}{config['vmware_filename']}'
     session = requests.Session()
     
     try:
