@@ -26,15 +26,15 @@ def run_schedule():
 
 @app.route('/api/download/nvd_cve', methods=['GET'])
 def get_cve():
-    return send_file(f'{data_path}{config['nvd_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config["nvd_filename"]}', mimetype='text/html')
 
 @app.route('/api/download/vmware_cve', methods=['GET'])
 def get_vmware():
-    return send_file(f'{data_path}{config['vmware_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config["vmware_filename"]}', mimetype='text/html')
 
 @app.route('/api/download/mitre_cve', methods=['GET'])
 def get_mitr_cve():
-    return send_file(f'{data_path}{config['mitre_filename']}', mimetype='text/html')
+    return send_file(f'{data_path}{config["mitre_filename"]}', mimetype='text/html')
 
 @app.route('/api/last_cve/all', methods=['GET'])
 def last_all_cve():
@@ -78,7 +78,9 @@ schedule.every(refresh_time).minutes.do(find_all_task)
 if __name__ == '__main__':
     schedule_thread = threading.Thread(target=run_schedule)
     schedule_thread.start()
+    print("загрузка начата")
     download_all_task()
+    print("поиск начат")
     find_all_task()
    
     app.run(debug=True, host='0.0.0.0', port=9000)
