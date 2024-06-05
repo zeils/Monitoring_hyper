@@ -39,19 +39,19 @@ def find_dates_in_vmware_cve_html():
 
 def find_dates_in_nvd_cve_html():
     filename = f'{data_path}{config["nvd_filename"]}'
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         content = file.read()
         soup = BeautifulSoup(content, 'html.parser')
         date_spans = soup.find_all('span', {'data-testid': lambda x: x and 'vuln-published-on-' in x})
         dates = []
         for span in date_spans:
             date_str = span.text.strip()
-            dates.append(datetime.strptime(date_str, '%b %d, %Y; %I:%M:%S %p %z'))
+            dates.append(datetime.strptime(date_str, '%B %d, %Y; %I:%M:%S %p %z'))
 
         latest_date = max(dates)
-        log = (f'The latest CVE vulnerability has been published: {latest_date}')
+        log = f'The latest CVE vulnerability has been published: {latest_date}'
         print(log)
-        check_and_append_log(f'{log_path}nvd_cve.log', log )
+        check_and_append_log(f'{log_path}nvd_cve.log', log)
         return latest_date
 
 def find_dates_in_mitr_cve_html():
